@@ -1,0 +1,64 @@
+---
+- hosts: newkubernetesmaster
+  remote_user: centos
+  become: true
+  tasks:
+    - name: Install NTP
+      yum: name=ntp state=present
+    - name: enable and restart ntp
+      systemd:
+        name: ntpd
+        state: started
+        enabled: yes
+
+    - name: Installing etcd
+      yum: name=etcd state=present
+    - name: install kubernetes
+      yum: name=kubernetes state=present
+
+######### ADDING IN LINE & REPLACEMENT ########
+    - name: adding a line in /etc/etcd/etcd.conf
+      lineinfile:
+        path: /etc/etcd/etcd.conf
+        regexp: '^ETCD_LISTEN_CLIENT_URLS'
+        line: 'ETCD_LISTEN_CLIENT_URLS="http://0.0.0.0:2379"'
+
+    - name: adding a line in /etc/kubernetes/apiserver
+      lineinfile:
+        path: /etc/kubernetes/apiserver
+        regexp: '^KUBE_API_ADDRESS='
+        line: 'KUBE_API_ADDRESS="--insecure-bind-address=0.0.0.0"'
+
+    - name: replacing a line in /etc/kubernetes/apiserver
+      replace:
+        path: /etc/kubernetes/apiserver
+        regexp: '^# KUBE_API_PORT="--port=8080"'
+        replace: 'KUBE_API_PORT="--port=8080"'
+
+    - name: replacing a line in /etc/kubernetes/apiserver
+      replace:
+        path: /etc/kubernetes/apiserver
+        regexp: '^# KUBELET_PORT="--kubelet-port=10250"'
+        replace: 'KUBELET_PORT="--kubelet-port=10250"'
+
+#############ENABLE/RESTART Services###########
+    - name: enable and restart etcd
+      systemd:
+        name: etcd
+        state: restarted
+        enabled: yes
+    - name: enable and restart kube-apiserver
+      systemd:
+        name: kube-apiserver
+        state: restarted
+        enabled: yes
+    - name: enable and restart kube-controller-manager
+      systemd:
+        name: kube-controller-manager
+        state: restarted
+        enabled: yes
+    - name: enable and restart kube-scheduler
+      systemd:
+        name: kube-scheduler
+        state: restarted
+        enabled: yes

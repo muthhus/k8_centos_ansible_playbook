@@ -1,0 +1,9 @@
+---
+- hosts: kubernetesslave1
+  remote_user: centos
+  become: true
+  tasks:
+    - name: Copy script to install apache
+      copy: src=apache.sh dest=/home/centos/apache.sh
+    - name: Execute the script
+      script: /home/centos/apache.sh
